@@ -1,13 +1,15 @@
 module Api
   module V1
     class SessionsController < ApplicationController
+      skip_before_action :authenticate_request, only: [:create]
+
       # Login
       def create
         user = User.find_by(email: params[:user][:email])
 
         if user&.authenticate(params[:user][:password])
-          session[:user_id] = user.id
-          render json: { id: user.id, email: user.email }
+          token = JsonWebToken.encode(user_id: user.id)
+          render json: { token: token, user: { id: user.id, email: user.email }, message: "Logged in successfully" }
         else
           render json: { error: "Invalid credentials" }, status: :unauthorized
         end
@@ -16,7 +18,7 @@ module Api
       # Logout
       def destroy
         session[:user_id] = nil
-        head :no_content
+        render json: { message: "Logged out successfully" }
       end
 
       def show

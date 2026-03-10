@@ -1,6 +1,16 @@
 class ApplicationController < ActionController::API
-  include ActionController::Cookies
-  include ActionController::RequestForgeryProtection
+  before_action :authenticate_request
 
-  protect_from_forgery with: :null_session
+  attr_reader :current_user
+
+  private
+
+  def authenticate_request
+    header = request.headers['Authorization']
+    token = header.split(' ').last if header.present?
+    decoded = JsonWebToken.decode(token)
+    @current_user = User.find_by(id: decoded[:user_id]) if decoded
+
+    render json: { user: nil, error: 'Unauthorized' }, status: :unauthorized unless @current_user
+  end
 end

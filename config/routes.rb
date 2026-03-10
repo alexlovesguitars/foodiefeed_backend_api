@@ -1,9 +1,13 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      resources :recipes
-      resource :user, only: [:create, :update, :destroy]
+      resources :recipes do
+        member do
+          patch :publish
+        end
+      end
 
+      resource :user, only: [:create, :update, :destroy]
       resource :session, only: [:create, :destroy, :show]
     end
   end

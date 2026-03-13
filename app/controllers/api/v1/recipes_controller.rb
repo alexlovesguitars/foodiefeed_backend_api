@@ -9,13 +9,13 @@ module Api
       def index
         # All public recipes + current user's recipes (including drafts)
         @recipes = Recipe.where("public = ? OR user_id = ?", true, current_user.id)
-        render json: @recipes.as_json(only: [:id, :title, :description, :public, :draft, :user_id])
+        render json: @recipes.as_json(only: [:id, :title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time, :public, :draft, :user_id])
       end
 
       # GET /api/v1/recipes/:id
       def show
         if @recipe.public? || @recipe.user_id == current_user.id
-          render json: @recipe.as_json(only: [:id, :title, :description, :ingredients, :instructions, :public, :draft, :user_id])
+          render json: @recipe.as_json(only: [:id, :title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time, :public, :draft, :user_id])
         else
           render json: { error: "Not authorized to view this recipe" }, status: :forbidden
         end
@@ -30,7 +30,7 @@ module Api
         @recipe.public = false if @recipe.public.nil?
 
         if @recipe.save
-          render json: @recipe.as_json(only: [:id, :title, :description, :public, :draft, :user_id]), status: :created
+          render json: @recipe.as_json(only: [:id, :title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time, :public, :draft, :user_id]), status: :created
         else
           render json: { errors: @recipe.errors.full_messages }, status: :unprocessable_entity
         end
@@ -45,7 +45,7 @@ module Api
         end
 
         if @recipe.update(recipe_params)
-          render json: @recipe.as_json(only: [:id, :title, :description, :public, :draft, :user_id])
+          render json: @recipe.as_json(only: [:id, :title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time, :public, :draft, :user_id])
         else
           render json: { errors: @recipe.errors.full_messages }, status: :unprocessable_entity
         end
@@ -61,7 +61,7 @@ module Api
       def publish
         if @recipe.draft?
           @recipe.update(draft: false, public: true)
-          render json: @recipe.as_json(only: [:id, :title, :public, :draft, :user_id])
+          render json: @recipe.as_json(only: [:id, :title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time, :public, :draft, :user_id])
         else
           render json: { error: "Recipe is already published" }, status: :unprocessable_entity
         end
@@ -70,7 +70,7 @@ module Api
       private
 
       def recipe_params
-        permitted = [:title, :description, :ingredients, :instructions]
+        permitted = [:title, :description, :ingredients, :instructions, :dietary_tags, :prep_time, :cook_time]
         permitted << :public if current_user.creator?
         permitted << :draft if current_user.creator?
         params.require(:recipe).permit(permitted)
